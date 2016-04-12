@@ -20,7 +20,6 @@ import java.util.ArrayList;
  */
 public class SwipeDeck extends FrameLayout {
 
-    private static final String TAG = "SwipeDeck.java";
     private static int NUMBER_OF_CARDS;
     private float ROTATION_DEGREES;
     private float CARD_SPACING;
@@ -192,8 +191,6 @@ public class SwipeDeck extends FrameLayout {
 
     private void removeViewWaitForAnimation(View child) {
         new RemoveViewOnAnimCompleted().execute(child);
-
-
     }
 
     @Override
@@ -402,7 +399,6 @@ public class SwipeDeck extends FrameLayout {
 
 
     public void swipeTopCardLeft(int duration) {
-
         int childCount = getChildCount();
         if (childCount > 0 && getChildCount() < (NUMBER_OF_CARDS + 1)) {
             swipeListener.animateOffScreenLeft(duration);
@@ -412,7 +408,6 @@ public class SwipeDeck extends FrameLayout {
             if (eventCallback != null) eventCallback.cardSwipedLeft(positionInAdapter);
             addNextCard();
         }
-
     }
 
     public void swipeTopCardRight(int duration) {

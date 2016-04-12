@@ -1,7 +1,6 @@
 package com.daprlabs.cardstack;
 
 import android.animation.Animator;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -157,7 +156,6 @@ public class SwipeListener implements View.OnTouchListener {
     }
 
     public void checkCardForEvent() {
-
         if (cardBeyondLeftBorder()) {
             animateOffScreenLeft(160)
                     .setListener(new Animator.AnimatorListener() {
