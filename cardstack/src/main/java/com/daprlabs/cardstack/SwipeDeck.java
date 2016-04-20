@@ -153,11 +153,6 @@ public class SwipeDeck extends FrameLayout {
         addAndPositionCards();
     }
 
-    @Override
-    public void removeView(View view) {
-        super.removeView(view);
-    }
-
     // ===== HARDWARE ACCELERATION =================================================================
 
     /**
@@ -286,7 +281,9 @@ public class SwipeDeck extends FrameLayout {
                 card.findViewById(rightImageResource)
                     .setAlpha(0);
             }
-            setupTopCard(card);
+            // lets not set touch delegates on this view until we figure out
+            // touch issues R.Pina 20160420
+//            setTouchInteractions(card);
             setZTranslations();
         }
     }
@@ -320,7 +317,7 @@ public class SwipeDeck extends FrameLayout {
     }
 
 
-    private void setupTopCard(@NonNull View view) {
+    private void setTouchInteractions(@NonNull View view) {
         //this calculation is to get the correct position in the adapter of the current top card
         //the card position on setup top card is currently always the bottom card in the view
         //at any given time.
@@ -389,20 +386,27 @@ public class SwipeDeck extends FrameLayout {
         }
     }
 
+    // figure out touch issues R.Pina 20140420
     private void removeTopCard() {
         //top card is now the last in view children
         final View child = getChildAt(getChildCount() - 1);
-        if (child != null) {
-            child.setOnTouchListener(null);
-            child.setTag(null);
-            //this will also check to see if cards are depleted
-            removeViewWaitForAnimation(child);
+//        if (child != null) {
+//            child.setOnTouchListener(null);
+//            child.setTag(null);
+//            //this will also check to see if cards are depleted
+//            removeViewWaitForAnimation(child);
+//        }
+        removeView(child);
+        //if there are no more children left after top card removal let the callback know
+        if (mAdapter.getCount() == 0) {
+            eventCallback.cardsDepleted();
         }
     }
 
-    private void removeViewWaitForAnimation(View child) {
-        new RemoveViewOnAnimCompleted().execute(child);
-    }
+    // figure out touch issues R.Pina 20140420
+//    private void removeViewWaitForAnimation(View child) {
+//        new RemoveViewOnAnimCompleted().execute(child);
+//    }
 
     private SwipeListener.SwipeCallback getSwipeCallback() {
         return new SwipeListener.SwipeCallback() {
@@ -461,7 +465,6 @@ public class SwipeDeck extends FrameLayout {
         protected void onPostExecute(View view) {
             super.onPostExecute(view);
             removeView(view);
-
             //if there are no more children left after top card removal let the callback know
             if (mAdapter.getCount() == 0) {
                 eventCallback.cardsDepleted();
