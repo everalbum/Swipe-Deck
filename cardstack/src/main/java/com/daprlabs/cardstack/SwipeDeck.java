@@ -18,7 +18,7 @@ import java.util.LinkedList;
 
 public class SwipeDeck extends FrameLayout {
 
-    private final static int    ANIMATION_TIME = 160;
+    private final static int ANIMATION_TIME = 160;
 
     private static int     NUMBER_OF_CARDS;
     private        float   ROTATION_DEGREES;
@@ -45,8 +45,8 @@ public class SwipeDeck extends FrameLayout {
     private final LinkedList<View> cards;
     private final Handler          handler;
 
-    private int           leftImageResource;
-    private int           rightImageResource;
+    private int leftImageResource;
+    private int rightImageResource;
 
     public SwipeDeck(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -224,7 +224,6 @@ public class SwipeDeck extends FrameLayout {
         // remove all previous views
         removeAllViews();
         // get all views from adapter
-        getViewsFromAdapter();
 
         layoutAndAddCard();
         for (int i = 0; i < getChildCount(); ++i) {
@@ -232,27 +231,28 @@ public class SwipeDeck extends FrameLayout {
         }
     }
 
-    private void getViewsFromAdapter() {
-        View newBottomChild;
-        for (int i = 0; i < mAdapter.getCount(); i++) {
-            newBottomChild = mAdapter.getView(i, null/*lastRemovedView*/, this);
-            if (hardwareAccelerationEnabled) {
-                //set backed by an off-screen buffer
-                newBottomChild.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-            }
-            cards.push(newBottomChild);
-        }
-    }
-
     /**
      * Adds a view as a child view and takes care of measuring it
      */
     private void layoutAndAddCard() {
-        final ViewGroup.LayoutParams[] paramMap = new ViewGroup.LayoutParams[cards.size()];
+        final ViewGroup.LayoutParams[] paramMap = new ViewGroup.LayoutParams[NUMBER_OF_CARDS];
         View card;
         ViewGroup.LayoutParams params;
+        cards.clear();
 
-        for (int i = currentCard; i < cards.size(); i++) {
+        for (int i = currentCard; i < mAdapter.getCount(); i++) {
+            if (i == (NUMBER_OF_CARDS + currentCard)) {
+                break;
+            }
+            card = mAdapter.getView(i, null/*lastRemovedView*/, this);
+            if (hardwareAccelerationEnabled) {
+                //set backed by an off-screen buffer
+                card.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            }
+            cards.push(card);
+        }
+
+        for (int i = 0; i < cards.size(); i++) {
             card = cards.get(i);
             params = card.getLayoutParams();
             if (params == null) {
@@ -263,7 +263,7 @@ public class SwipeDeck extends FrameLayout {
             card.setY(paddingTop);
         }
 
-        for (int i = currentCard; i < cards.size() && i < NUMBER_OF_CARDS; i++) {
+        for (int i = 0; i < cards.size(); i++) {
             card = cards.get(i);
             addViewInLayout(card, -1, paramMap[i], true);
             int itemWidth = getWidth() - (paddingLeft + paddingRight);
@@ -376,14 +376,11 @@ public class SwipeDeck extends FrameLayout {
                 eventCallback.cardSwipedLeft();
             }
         }
-        final boolean needToAddCard = mAdapter.getCount() > NUMBER_OF_CARDS;
         mAdapter.removeTop();
         removeTopCard();
         currentCard++;
-        if (needToAddCard) {
-            layoutAndAddCard();
-            setZTranslations();
-        }
+        layoutAndAddCard();
+        setZTranslations();
     }
 
     // figure out touch issues R.Pina 20140420
