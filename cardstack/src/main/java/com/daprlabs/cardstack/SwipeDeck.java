@@ -41,8 +41,6 @@ public class SwipeDeck extends FrameLayout {
      */
     private       SwipeDeckAdapter mAdapter;
     private       DataSetObserver  observer;
-    private       int              currentCard;
-    private final LinkedList<View> cards;
     private final Handler          handler;
 
     private int leftImageResource;
@@ -51,7 +49,6 @@ public class SwipeDeck extends FrameLayout {
     public SwipeDeck(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        cards = new LinkedList<>();
         handler = new Handler();
 
         TypedArray a = context.getTheme()
@@ -146,7 +143,6 @@ public class SwipeDeck extends FrameLayout {
         super.onLayout(changed, left, top, right, bottom);
         // if we don't have an adapter, we don't need to do anything
         if (mAdapter == null || mAdapter.getCount() == 0) {
-            clearCards();
             removeAllViewsInLayout();
             return;
         }
@@ -186,7 +182,6 @@ public class SwipeDeck extends FrameLayout {
             @Override
             public void onInvalidated() {
                 //reset state, remove views and request layout
-                clearCards();
                 removeAllViews();
                 requestLayout();
             }
@@ -197,30 +192,21 @@ public class SwipeDeck extends FrameLayout {
         requestLayout();
     }
 
-    // ===== CARD MANIPULATION =====================================================================
-
-    private void clearCards() {
-        currentCard = 0;
-        cards.clear();
-    }
-
     // ----- SWIPING CARDS -------------------------------------------------------------------------
 
-    public void swipeTopCardLeft(int duration) {
+    public void swipeTopCardLeft(int duration, long cardId) {
 //        onSwipeTopCard(false, duration);
-        removeAndAddNext(false);
+        removeAndAddNext(false, cardId);
     }
 
-    public void swipeTopCardRight(int duration) {
+    public void swipeTopCardRight(int duration, long cardId) {
 //        onSwipeTopCard(true, duration);
-        removeAndAddNext(true);
+        removeAndAddNext(true, cardId);
     }
 
     // ----- ADDING CARDS --------------------------------------------------------------------------
 
     private void addAndPositionCards() {
-        // clear previous cards
-        clearCards();
         // remove all previous views
         removeAllViews();
         // get all views from adapter
@@ -238,10 +224,10 @@ public class SwipeDeck extends FrameLayout {
         final ViewGroup.LayoutParams[] paramMap = new ViewGroup.LayoutParams[NUMBER_OF_CARDS];
         View card;
         ViewGroup.LayoutParams params;
-        cards.clear();
 
-        for (int i = currentCard; i < mAdapter.getCount(); i++) {
-            if (i == (NUMBER_OF_CARDS + currentCard)) {
+        final LinkedList<View> cards = new LinkedList<>();
+        for (int i = 0; i < mAdapter.getCount(); i++) {
+            if (i == NUMBER_OF_CARDS) {
                 break;
             }
             card = mAdapter.getView(i, null/*lastRemovedView*/, this);
@@ -311,9 +297,10 @@ public class SwipeDeck extends FrameLayout {
         //layout each child slightly above the previous child (we start with the bottom)
         int childCount = getChildCount();
         float offset = (int) (((childCount - 1) * CARD_SPACING) - (index * CARD_SPACING));
-        child.animate()
-             .setDuration(160)
-             .y(paddingTop + offset);
+        child.setY(paddingTop + offset);
+//        child.animate()
+//             .setDuration(160)
+//             .y(paddingTop + offset);
     }
 
 
@@ -363,12 +350,13 @@ public class SwipeDeck extends FrameLayout {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                removeAndAddNext(right);
+                // don't fucking pass zero
+                removeAndAddNext(right, 0);
             }
         }, duration);
     }
 
-    private void removeAndAddNext(boolean right) {
+    private void removeAndAddNext(boolean right, long cardId) {
         if (eventCallback != null) {
             if (right) {
                 eventCallback.cardSwipedRight();
@@ -376,15 +364,13 @@ public class SwipeDeck extends FrameLayout {
                 eventCallback.cardSwipedLeft();
             }
         }
-        mAdapter.removeTop();
-        removeTopCard();
-        currentCard++;
+        removeTopCard(cardId);
         layoutAndAddCard();
-        setZTranslations();
+//        setZTranslations();
     }
 
     // figure out touch issues R.Pina 20140420
-    private void removeTopCard() {
+    private void removeTopCard(long cardId) {
         //top card is now the last in view children
         final View child = getChildAt(getChildCount() - 1);
 //        if (child != null) {
@@ -393,6 +379,7 @@ public class SwipeDeck extends FrameLayout {
 //            //this will also check to see if cards are depleted
 //            removeViewWaitForAnimation(child);
 //        }
+        mAdapter.removeCard(cardId);
         removeView(child);
         //if there are no more children left after top card removal let the callback know
         if (mAdapter.getCount() == 0) {
@@ -409,12 +396,12 @@ public class SwipeDeck extends FrameLayout {
         return new SwipeListener.SwipeCallback() {
             @Override
             public void cardSwipedLeft() {
-                removeAndAddNext(false);
+
             }
 
             @Override
             public void cardSwipedRight() {
-                removeAndAddNext(true);
+
             }
 
             @Override
